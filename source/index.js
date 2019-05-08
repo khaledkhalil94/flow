@@ -178,6 +178,16 @@ exports.install = function(options) {
 							item.output -= item.no;
 						item.ni = 0;
 						item.no = 0;
+						item.no0 && (item.no0 = 0);
+						item.no1 && (item.no1 = 0);
+						item.no2 && (item.no2 = 0);
+						item.no3 && (item.no3 = 0);
+						item.no4 && (item.no4 = 0);
+						item.no5 && (item.no5 = 0);
+						item.no6 && (item.no6 = 0);
+						item.no7 && (item.no7 = 0);
+						item.no8 && (item.no8 = 0);
+						item.no9 && (item.no9 = 0);
 					}
 				}
 
@@ -895,6 +905,37 @@ Component.prototype.send2 = function(index, message) {
 		return this.send(index, message);
 };
 
+Component.prototype.callback = function(index, data, callback, param) {
+	var dataIsFn = typeof(data) === 'function';
+
+	if (typeof(index) === 'function') {
+		callback = index;
+		index = 0;
+	}
+
+	if (data === undefined || (callback === undefined && !dataIsFn))
+		return;
+
+	if (!(data instanceof FlowData) && dataIsFn) {
+		param = callback;
+		callback = data;
+		data = null;
+	}
+
+	var connections = this.connections;
+	var conn = connections[index];
+	if (!conn || !conn[0])
+		return;
+
+	conn = conn[0];
+
+	var instance = FLOW.instances[conn.id];
+
+	instance.$events.data && instance.emit('data', data, callback, param);
+
+	return this;
+};
+
 Component.prototype.send = function(index, message) {
 
 	if (message === undefined) {
@@ -946,7 +987,7 @@ Component.prototype.send = function(index, message) {
 		if (self.disabledio.output.indexOf(0) > -1)
 			return;
 
-		FLOW.traffic(self.id, 'output');
+		FLOW.traffic(self.id, 'output', null, 0);
 
 		var tmp = {};
 
@@ -990,8 +1031,9 @@ Component.prototype.send = function(index, message) {
 						if (FLOW.alltraffic[instance.id])
 							FLOW.alltraffic[instance.id].ci = instance.countinput;
 
-						instance.$events.data && instance.emit('data', data);
-						instance.$events[ids[j].index] && instance.emit(ids[j].index, data);
+						instance.$events.data && instance.emit('data', data, instance.send);
+						instance.$events[ids[j].index] && instance.emit(ids[j].index, data, instance.send);
+
 					} catch (e) {
 						instance.error(e, self.id);
 					}
@@ -1016,7 +1058,7 @@ Component.prototype.send = function(index, message) {
 		if (self.disabledio.output.indexOf(index) > -1)
 			return;
 
-		FLOW.traffic(self.id, 'output');
+		FLOW.traffic(self.id, 'output', null, index);
 
 		var tmp = {};
 		for (var i = 0, length = arr.length; i < length; i++) {
@@ -1050,8 +1092,8 @@ Component.prototype.send = function(index, message) {
 					if (FLOW.alltraffic[instance.id])
 						FLOW.alltraffic[instance.id].ci = instance.countinput;
 
-					instance.$events.data && instance.emit('data', data);
-					instance.$events[arr[i].index] && instance.emit(arr[i].index, data);
+					instance.$events.data && instance.emit('data', data, instance.send);
+					instance.$events[arr[i].index] && instance.emit(arr[i].index, data, instance.send);
 				} catch (e) {
 					instance.error(e, self.id);
 				}
@@ -1918,8 +1960,9 @@ FLOW.rem = function(key) {
 // co = message count in output
 // ni = new messages on input
 // no = new messages on output
-FLOW.traffic = function(id, type, count) {
+FLOW.traffic = function(id, type, count, index) {
 	!FLOW.alltraffic[id] && (FLOW.alltraffic[id] = { input: 0, output: 0, pending: 0, duration: 0, ci: 0, co: 0, ni: 0, no: 0 });
+	var k;
 	switch (type) {
 		case 'pending':
 		case 'duration':
@@ -1930,12 +1973,22 @@ FLOW.traffic = function(id, type, count) {
 		case 'output':
 			FLOW.alltraffic[id][type]++;
 			FLOW.alltraffic[id].no++;
+			if (index != null && index < 10) {
+				k = 'no' + index;
+				if (FLOW.alltraffic[id][k])
+					FLOW.alltraffic[id][k]++;
+				else
+					FLOW.alltraffic[id][k] = 1;
+			}
 			FLOW.alltraffic.count++;
 			break;
+
 		case 'input':
-			if (count !== true) FLOW.alltraffic[id][type]++;
+			if (count !== true)
+				FLOW.alltraffic[id][type]++;
 			FLOW.alltraffic[id].ni++;
 			break;
+
 		default:
 			FLOW.alltraffic[id][type]++;
 			break;
@@ -1954,6 +2007,16 @@ FLOW.trafficreset = function() {
 			item.output = 0;
 			item.ni = 0;
 			item.no = 0;
+			item.no0 && (item.no0 = 0);
+			item.no1 && (item.no1 = 0);
+			item.no2 && (item.no2 = 0);
+			item.no3 && (item.no3 = 0);
+			item.no4 && (item.no4 = 0);
+			item.no5 && (item.no5 = 0);
+			item.no6 && (item.no6 = 0);
+			item.no7 && (item.no7 = 0);
+			item.no8 && (item.no8 = 0);
+			item.no9 && (item.no9 = 0);
 		}
 	}
 	return FLOW;
